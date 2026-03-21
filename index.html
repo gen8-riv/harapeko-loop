@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>はらぺこループ</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    /* ===== リセット & ベース ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+      background: #FFF8F0;
+      color: #333;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ===== ヘッダー ===== */
+    .header {
+      background: linear-gradient(135deg, #FF6B35, #FF8C42);
+      color: white;
+      padding: 16px 20px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .header-emoji {
+      font-size: 24px;
+      margin-right: 6px;
+    }
+
+    /* ===== モード切替トグル ===== */
+    .mode-toggle {
+      display: flex;
+      background: #F5E6D3;
+      border-radius: 12px;
+      padding: 4px;
+      margin: 12px 16px;
+      gap: 4px;
+    }
+    .mode-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 10px 8px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .mode-btn.active {
+      background: white;
+      color: #FF6B35;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* ===== タイムライン ===== */
+    .page { display: none; padding-bottom: 80px; }
+    .page.active { display: block; }
+
+    .timeline {
+      padding: 0 16px 16px;
+    }
+
+    /* ===== 投稿カード共通 ===== */
+    .card {
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      transition: transform 0.2s;
+    }
+    .card:active {
+      transform: scale(0.98);
+    }
+
+    /* 空腹カード */
+    .card-hungry {
+      background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+      border-left: 4px solid #FF6B35;
+    }
+
+    /* 満腹カード（ループ完成） */
+    .card-full {
+      background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+      border-left: 4px solid #4CAF50;
+    }
+
+    .card-user {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .card-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #FFD7C4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .card-full .card-avatar {
+      background: #A5D6A7;
+    }
+    .card-nickname {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .card-time {
+      font-size: 12px;
+      color: #999;
+      margin-left: auto;
+    }
+
+    /* 空腹ステータスバッジ */
+    .status-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+    .badge-hungry {
+      background: #FF6B35;
+      color: white;
+    }
+    .badge-full {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .card-text {
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .card-hungry-text {
+      color: #BF360C;
+    }
+
+    /* ループ完成のビフォーアフター */
+    .loop-pair {
+      margin-top: 8px;
+    }
+    .loop-step {
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+    }
+    .loop-step-hungry {
+      background: rgba(255, 107, 53, 0.12);
+    }
+    .loop-step-full {
+      background: rgba(76, 175, 80, 0.12);
+    }
+    .loop-step-label {
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .loop-step-hungry .loop-step-label { color: #FF6B35; }
+    .loop-step-full .loop-step-label { color: #4CAF50; }
+    .loop-step-text {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    /* ループモード：未完ループカード */
+    .card-loop-pending {
+      background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+      border: 2px dashed #FFB74D;
+      border-left: 4px solid #FF6B35;
+      position: relative;
+    }
+    .loop-pending-footer {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: rgba(255, 183, 77, 0.15);
+      border-radius: 10px;
+      font-size: 13px;
+      color: #E65100;
+      font-weight: 600;
+    }
+    .loop-pending-dots {
+      display: inline-flex;
+      gap: 3px;
+    }
+    .loop-pending-dots span {
+      width: 6px;
+      height: 6px;
+      background: #FFB74D;
+      border-radius: 50%;
+      animation: dotPulse 1.4s infinite;
+    }
+    .loop-pending-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loop-pending-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotPulse {
+      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* ループモード：完成ループカード強化 */
+    .card-loop-complete {
+      border: none;
+      box-shadow: 0 3px 16px rgba(76, 175, 80, 0.15);
+    }
+    .loop-complete-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #2E7D32;
+      margin-bottom: 10px;
+      padding: 4px 10px;
+      background: rgba(76, 175, 80, 0.1);
+      border-radius: 8px;
+      width: fit-content;
+    }
+    .loop-duration {
+      font-size: 11px;
+      color: #999;
+      text-align: center;
+      margin: 2px 0;
+    }
+
+    .loop-arrow {
+      text-align: center;
+      font-size: 18px;
+      margin: 2px 0;
+    }
+
+    /* 写真プレースホルダー */
+    .card-photo {
+      width: 100%;
+      height: 180px;
+      border-radius: 12px;
+      object-fit: cover;
+      margin-top: 8px;
+      background: linear-gradient(135deg, #FFE0B2, #FFCC80);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+    }
+    .card-full .card-photo {
+      background: linear-gradient(135deg, #C8E6C9, #A5D6A7);
+    }
+
+    /* 経過時間 */
+    .elapsed-time {
+      font-size: 12px;
+      color: #FF6B35;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* リアクション */
+    .reactions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .reaction-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.7);
+      border: 1.5px solid #E0E0E0;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .reaction-btn:hover {
+      border-color: #FF6B35;
+      transform: scale(1.05);
+    }
+    .reaction-btn.reacted {
+      border-color: #FF6B35;
+      background: #FFF3E0;
+    }
+    .reaction-count {
+      font-size: 12px;
+      color: #666;
+      font-weight: 600;
+    }
+
+    /* ===== ボトムナビ ===== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+      z-index: 100;
+    }
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 4px 16px;
+      color: #BBB;
+      transition: color 0.2s;
+    }
+    .nav-btn.active { color: #FF6B35; }
+    .nav-btn-icon { font-size: 24px; }
+    .nav-btn-label { font-size: 10px; font-weight: 600; margin-top: 2px; }
+
+    /* 中央の投稿ボタン */
+    .nav-post-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FF6B35, #FF8C42);
+      border: 4px solid white;
+      color: white;
+      font-size: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+      margin-top: -24px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-post-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 16px rgba(255, 107, 53, 0.5);
+    }
+    .nav-post-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* ===== 投稿モーダル ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal {
+      background: white;
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 480px;
+      padding: 24px 20px;
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      max-height: 85dvh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .modal-handle {
+      width: 40px;
+      height: 4px;
+      background: #DDD;
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .modal-title-hungry { color: #FF6B35; }
+    .modal-title-full { color: #4CAF50; }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .form-textarea {
+      width: 100%;
+      min-height: 100px;
+      border: 2px solid #E0E0E0;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+    .form-textarea:focus {
+      outline: none;
+      border-color: #FF6B35;
+    }
+    .form-textarea.full-mode:focus {
+      border-color: #4CAF50;
+    }
+    .char-count {
+      text-align: right;
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+    .char-count.over { color: #E53935; }
+
+    .photo-upload {
+      width: 100%;
+      height: 120px;
+      border: 2px dashed #DDD;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #BBB;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .photo-upload:hover {
+      border-color: #FF6B35;
+      background: #FFF8F0;
+    }
+    .photo-upload-icon { font-size: 32px; }
+    .photo-upload-text { font-size: 13px; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .submit-btn:hover { opacity: 0.9; }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn-hungry { background: linear-gradient(135deg, #FF6B35, #FF8C42); }
+    .submit-btn-full { background: linear-gradient(135deg, #4CAF50, #66BB6A); }
+
+    .cancel-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: #F5F5F5;
+      font-size: 14px;
+      color: #999;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* ===== マイページ ===== */
+    .mypage {
+      padding: 20px 16px;
+    }
+    .profile-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFD7C4, #FFAB91);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 12px;
+    }
+    .profile-nickname {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .profile-stats {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FF6B35;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #666;
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+
+    /* ===== トースト通知 ===== */
+    .toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #333;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 300;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== 空のタイムライン ===== */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #BBB;
+    }
+    .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state-text { font-size: 14px; }
+
+    /* ===== カードアニメーション ===== */
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .card {
+      animation: cardFadeIn 0.4s ease forwards;
+    }
+    .card:nth-child(1) { animation-delay: 0s; }
+    .card:nth-child(2) { animation-delay: 0.06s; }
+    .card:nth-child(3) { animation-delay: 0.12s; }
+    .card:nth-child(4) { animation-delay: 0.18s; }
+    .card:nth-child(5) { animation-delay: 0.24s; }
+    .card:nth-child(6) { animation-delay: 0.3s; }
+
+    /* ===== モードカウントバッジ ===== */
+    .mode-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      background: #E0E0E0;
+      color: #999;
+      font-size: 10px;
+      font-weight: 700;
+      margin-left: 4px;
+      padding: 0 5px;
+    }
+    .mode-btn.active .mode-count {
+      background: #FF6B35;
+      color: white;
+    }
+
+    /* ===== マイページ：ループ達成率 ===== */
+    .achievement-section {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    .achievement-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #666;
+      margin-bottom: 12px;
+    }
+    .progress-bar-container {
+      background: #F0F0F0;
+      border-radius: 10px;
+      height: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #FF6B35, #4CAF50);
+      transition: width 0.8s ease;
+      min-width: 0;
+    }
+    .progress-bar-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 11px;
+      font-weight: 700;
+      color: #333;
+    }
+    .achievement-detail {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #999;
+    }
+
+    /* ===== マイページ：ひとこと ===== */
+    .profile-bio {
+      font-size: 13px;
+      color: #888;
+      margin-top: 8px;
+    }
+
+    /* ===== ログインボタン（マイページ下部） ===== */
+    .login-section {
+      margin-top: 20px;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #E0E0E0;
+      border-radius: 12px;
+      background: white;
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .login-btn:hover {
+      border-color: #FF6B35;
+      color: #FF6B35;
+    }
+    .logout-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: #F5F5F5;
+      font-size: 13px;
+      color: #BBB;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* ===== ローディング ===== */
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      background: #FFF8F0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      gap: 16px;
+    }
+    .loading-screen.hidden { display: none; }
+    .loading-emoji { font-size: 48px; animation: bounce 1s infinite; }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    .loading-text { font-size: 14px; color: #999; font-weight: 600; }
+
+    /* ===== ニックネーム設定モーダル ===== */
+    .nickname-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 400;
+      justify-content: center;
+      align-items: center;
+    }
+    .nickname-modal.show { display: flex; }
+    .nickname-card {
+      background: white;
+      border-radius: 20px;
+      padding: 32px 24px;
+      width: 90%;
+      max-width: 360px;
+      text-align: center;
+    }
+    .nickname-card h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #FF6B35;
+    }
+    .nickname-card p {
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 20px;
+    }
+    .emoji-picker {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .emoji-option {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid #E0E0E0;
+      background: white;
+      font-size: 22px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .emoji-option.selected {
+      border-color: #FF6B35;
+      background: #FFF3E0;
+      transform: scale(1.15);
+    }
+    .nickname-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #E0E0E0;
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      text-align: center;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .nickname-input:focus {
+      outline: none;
+      border-color: #FF6B35;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ローディング画面 -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loading-emoji">🍽️</div>
+    <div class="loading-text">はらぺこループを準備中...</div>
+  </div>
+
+  <!-- ニックネーム設定モーダル -->
+  <div class="nickname-modal" id="nickname-modal">
+    <div class="nickname-card">
+      <h2>はじめまして！</h2>
+      <p>アイコンとニックネームを決めよう</p>
+      <div class="emoji-picker" id="emoji-picker">
+        <button class="emoji-option selected" data-emoji="😊">😊</button>
+        <button class="emoji-option" data-emoji="😤">😤</button>
+        <button class="emoji-option" data-emoji="🌸">🌸</button>
+        <button class="emoji-option" data-emoji="💪">💪</button>
+        <button class="emoji-option" data-emoji="🍳">🍳</button>
+        <button class="emoji-option" data-emoji="🐱">🐱</button>
+        <button class="emoji-option" data-emoji="🎸">🎸</button>
+        <button class="emoji-option" data-emoji="🍜">🍜</button>
+      </div>
+      <input type="text" class="nickname-input" id="nickname-input" placeholder="ニックネームを入力" maxlength="20">
+      <button class="submit-btn submit-btn-hungry" id="btn-save-nickname">はじめる！</button>
+    </div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <h1><span class="header-emoji">🍽️</span>はらぺこループ</h1>
+  </header>
+
+  <!-- トースト通知 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ===== タイムライン ===== -->
+  <div class="page active" id="page-timeline">
+    <div class="mode-toggle">
+      <button class="mode-btn active" data-mode="loop">🔄 ループ <span class="mode-count" id="count-loop"></span></button>
+      <button class="mode-btn" data-mode="hungry">🍚 はらぺこ <span class="mode-count" id="count-hungry"></span></button>
+      <button class="mode-btn" data-mode="full">😋 まんぷく <span class="mode-count" id="count-full"></span></button>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- ===== マイページ ===== -->
+  <div class="page" id="page-mypage">
+    <div class="mypage">
+      <div class="profile-card">
+        <div class="profile-avatar">😊</div>
+        <div class="profile-nickname">ずんだもん</div>
+        <div class="profile-bio">ずんだもちとお腹いっぱいが好きなのだ</div>
+        <div class="profile-stats">
+          <div class="stat-item">
+            <div class="stat-number" id="my-loop-count">3</div>
+            <div class="stat-label">ループ完了</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="my-hungry-count">1</div>
+            <div class="stat-label">空腹中</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="my-days">3</div>
+            <div class="stat-label">利用日数</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">📖 マイループ履歴</div>
+      <div id="my-timeline"></div>
+
+      <!-- アカウント操作 -->
+      <div class="login-section">
+        <button class="login-btn" onclick="showToast('Googleログインは今後対応予定です！')">
+          🔑 Googleアカウントと連携
+        </button>
+        <button class="logout-btn" id="btn-edit-profile">
+          ✏️ プロフィールを変更
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 投稿モーダル ===== -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-handle"></div>
+
+      <!-- 空腹投稿フォーム -->
+      <div id="form-hungry">
+        <div class="modal-title modal-title-hungry">🍚 お腹減った！</div>
+        <div class="form-group">
+          <label class="form-label">今の気持ちを教えて（必須）</label>
+          <textarea class="form-textarea" id="hungry-text" placeholder="例：昼ごはん食べそびれた...お腹ぐーぐー鳴ってる😭" maxlength="140"></textarea>
+          <div class="char-count"><span id="hungry-char-count">0</span>/140</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">写真（任意）</label>
+          <div class="photo-upload" id="hungry-photo-upload">
+            <div class="photo-upload-icon">📷</div>
+            <div class="photo-upload-text">空の冷蔵庫とか撮って📸</div>
+          </div>
+        </div>
+        <button class="submit-btn submit-btn-hungry" id="btn-post-hungry">お腹減った！を投稿する 🍚</button>
+        <button class="cancel-btn" id="btn-cancel-hungry">やめとく</button>
+      </div>
+
+      <!-- 満腹投稿フォーム -->
+      <div id="form-full" style="display:none">
+        <div class="modal-title modal-title-full">😋 満腹になった！</div>
+        <div class="form-group">
+          <label class="form-label">何食べた？（必須）</label>
+          <textarea class="form-textarea full-mode" id="full-text" placeholder="例：近くのラーメン屋で味噌ラーメン食べた！チャーシュー最高🍜" maxlength="140"></textarea>
+          <div class="char-count"><span id="full-char-count">0</span>/140</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">料理の写真（任意）</label>
+          <div class="photo-upload" id="full-photo-upload">
+            <div class="photo-upload-icon">📸</div>
+            <div class="photo-upload-text">おいしそうな写真を撮ろう🍽️</div>
+          </div>
+        </div>
+        <button class="submit-btn submit-btn-full" id="btn-post-full">満腹になった！を投稿する 😋</button>
+        <button class="cancel-btn" id="btn-cancel-full">まだ空腹中...</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ボトムナビ ===== -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="page-timeline">
+      <span class="nav-btn-icon">🏠</span>
+      <span class="nav-btn-label">タイムライン</span>
+    </button>
+    <button class="nav-post-btn" id="btn-open-post">+</button>
+    <button class="nav-btn" data-page="page-mypage">
+      <span class="nav-btn-icon">👤</span>
+      <span class="nav-btn-label">マイページ</span>
+    </button>
+  </nav>
+
+  <script>
+    // ===== Supabase 初期化 =====
+    const SUPABASE_URL = 'https://puostipvcfkxrkgnmfwz.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1b3N0aXB2Y2ZreHJrZ25tZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMTM3NTQsImV4cCI6MjA4OTU4OTc1NH0.EVQwLylrnqpya2kcvp-evPHUx6FxOvLvPW2t-M3Uask';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ===== 状態管理 =====
+    let currentUser = null;
+    let currentProfile = null;
+    let posts = [];
+    let currentMode = 'loop';
+    let currentPage = 'page-timeline';
+    let myHungryPostId = null;
+
+    // ===== 経過時間の表示 =====
+    function timeAgo(date) {
+      const d = typeof date === 'string' ? new Date(date) : date;
+      const diff = Date.now() - d.getTime();
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 1) return 'たった今';
+      if (minutes < 60) return `${minutes}分前`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}時間前`;
+      const days = Math.floor(hours / 24);
+      return `${days}日前`;
+    }
+
+    // ===== トースト =====
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ===== 認証 =====
+    async function initAuth() {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        await loadProfile();
+      } else {
+        // 匿名ログイン
+        const { data, error } = await db.auth.signInAnonymously();
+        if (error) {
+          showToast('ログインに失敗しました...');
+          console.error(error);
+          return;
+        }
+        currentUser = data.user;
+        // 新規ユーザー → ニックネーム設定
+        showNicknameModal();
+        return;
+      }
+      hideLoading();
+    }
+
+    async function loadProfile() {
+      const { data } = await db
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (data) {
+        currentProfile = data;
+        updateProfileUI();
+        hideLoading();
+        await loadPosts();
+      } else {
+        showNicknameModal();
+      }
+    }
+
+    function updateProfileUI() {
+      if (!currentProfile) return;
+      document.querySelector('.profile-avatar').textContent = currentProfile.avatar_emoji;
+      document.querySelector('.profile-nickname').textContent = currentProfile.nickname;
+    }
+
+    // ===== ニックネーム設定 =====
+    let selectedEmoji = '😊';
+
+    function showNicknameModal() {
+      document.getElementById('loading-screen').classList.add('hidden');
+      document.getElementById('nickname-modal').classList.add('show');
+    }
+
+    document.getElementById('emoji-picker').addEventListener('click', (e) => {
+      const btn = e.target.closest('.emoji-option');
+      if (!btn) return;
+      document.querySelectorAll('.emoji-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedEmoji = btn.dataset.emoji;
+    });
+
+    document.getElementById('btn-save-nickname').addEventListener('click', async () => {
+      const nickname = document.getElementById('nickname-input').value.trim();
+      if (!nickname) {
+        showToast('ニックネームを入力してね！');
+        return;
+      }
+
+      const { error } = await db.from('profiles').upsert({
+        id: currentUser.id,
+        nickname: nickname,
+        avatar_emoji: selectedEmoji,
+        is_anonymous: currentUser.is_anonymous || false,
+      });
+
+      if (error) {
+        showToast('保存に失敗しました...');
+        console.error(error);
+        return;
+      }
+
+      currentProfile = { id: currentUser.id, nickname, avatar_emoji: selectedEmoji };
+      document.getElementById('nickname-modal').classList.remove('show');
+      updateProfileUI();
+      hideLoading();
+      await loadPosts();
+      showToast(`ようこそ、${nickname}さん！`);
+    });
+
+    // プロフィール変更
+    document.getElementById('btn-edit-profile')?.addEventListener('click', () => {
+      document.getElementById('nickname-input').value = currentProfile?.nickname || '';
+      selectedEmoji = currentProfile?.avatar_emoji || '😊';
+      document.querySelectorAll('.emoji-option').forEach(b => {
+        b.classList.toggle('selected', b.dataset.emoji === selectedEmoji);
+      });
+      document.getElementById('nickname-modal').classList.add('show');
+    });
+
+    // ===== ローディング =====
+    function hideLoading() {
+      document.getElementById('loading-screen').classList.add('hidden');
+    }
+
+    // ===== 投稿データの読み込み =====
+    async function loadPosts() {
+      // 投稿を取得（profilesをjoin）
+      const { data: postsData, error } = await db
+        .from('posts')
+        .select('*, profiles(nickname, avatar_emoji)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('posts load error:', error);
+        return;
+      }
+
+      // リアクション集計を取得
+      const postIds = postsData.map(p => p.id);
+      let reactionsMap = {};
+
+      if (postIds.length > 0) {
+        const { data: reactionsData } = await db
+          .from('reactions')
+          .select('post_id, emoji, target, user_id')
+          .in('post_id', postIds);
+
+        if (reactionsData) {
+          for (const r of reactionsData) {
+            const key = `${r.post_id}_${r.target}_${r.emoji}`;
+            if (!reactionsMap[key]) {
+              reactionsMap[key] = { emoji: r.emoji, target: r.target, postId: r.post_id, count: 0, myReaction: false };
+            }
+            reactionsMap[key].count++;
+            if (r.user_id === currentUser.id) {
+              reactionsMap[key].myReaction = true;
+            }
+          }
+        }
+      }
+
+      // 投稿データを整形
+      posts = postsData.map(p => {
+        const hungryReactions = Object.values(reactionsMap)
+          .filter(r => r.postId === p.id && r.target === 'hungry');
+        const fullReactions = Object.values(reactionsMap)
+          .filter(r => r.postId === p.id && r.target === 'full');
+
+        return {
+          id: p.id,
+          userId: p.user_id,
+          nickname: p.profiles?.nickname || '名無し',
+          avatar: p.profiles?.avatar_emoji || '😊',
+          status: p.status,
+          hungryText: p.hungry_text,
+          hungryAt: p.hungry_at,
+          fullText: p.full_text,
+          fullAt: p.full_at,
+          reactions: {
+            hungry: hungryReactions,
+            full: fullReactions,
+          }
+        };
+      });
+
+      // 自分の空腹中投稿を探す
+      const myHungryPost = posts.find(p => p.userId === currentUser.id && p.status === 'hungry');
+      myHungryPostId = myHungryPost?.id || null;
+
+      renderTimeline();
+    }
+
+    // ===== リアクションスタンプのHTML =====
+    const HUNGRY_STAMPS = [
+      { emoji: '😭', label: 'わかる〜' },
+      { emoji: '💪', label: 'がんばれ！' },
+    ];
+    const FULL_STAMPS = [
+      { emoji: '🍚', label: 'おいしそう！' },
+      { emoji: '😋', label: 'よかったね！' },
+    ];
+
+    function renderReactions(reactions, target, postId) {
+      const stamps = target === 'hungry' ? HUNGRY_STAMPS : FULL_STAMPS;
+      return `<div class="reactions">${stamps.map(stamp => {
+        const existing = reactions[target]?.find(r => r.emoji === stamp.emoji);
+        const count = existing?.count || 0;
+        const reacted = existing?.myReaction ? 'reacted' : '';
+        return `<button class="reaction-btn ${reacted}" onclick="toggleReaction('${postId}', '${stamp.emoji}', '${target}', this)">
+          <span>${stamp.emoji}</span>
+          <span class="reaction-count">${count}</span>
+        </button>`;
+      }).join('')}</div>`;
+    }
+
+    // ===== リアクション送信 =====
+    async function toggleReaction(postId, emoji, target, btn) {
+      const isReacted = btn.classList.contains('reacted');
+      const countEl = btn.querySelector('.reaction-count');
+      let count = parseInt(countEl.textContent);
+
+      if (isReacted) {
+        // リアクション削除
+        await db.from('reactions')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', currentUser.id)
+          .eq('emoji', emoji)
+          .eq('target', target);
+        btn.classList.remove('reacted');
+        countEl.textContent = Math.max(0, count - 1);
+      } else {
+        // リアクション追加
+        const { error } = await db.from('reactions').insert({
+          post_id: postId,
+          user_id: currentUser.id,
+          emoji: emoji,
+          target: target,
+        });
+        if (!error) {
+          btn.classList.add('reacted');
+          countEl.textContent = count + 1;
+        }
+      }
+    }
+
+    // ===== カードのHTML生成 =====
+
+    // はらぺこモード用
+    function renderHungryCard(post) {
+      return `
+        <div class="card card-hungry">
+          <div class="card-user">
+            <div class="card-avatar">${post.avatar}</div>
+            <div class="card-nickname">${post.nickname}</div>
+            <div class="card-time">${timeAgo(post.hungryAt)}</div>
+          </div>
+          <span class="status-badge badge-hungry">🍚 空腹中</span>
+          <div class="card-text card-hungry-text">${post.hungryText}</div>
+          <div class="elapsed-time">⏱ ${timeAgo(post.hungryAt)}から空腹中...</div>
+          ${renderReactions(post.reactions, 'hungry', post.id)}
+        </div>
+      `;
+    }
+
+    // まんぷくモード用
+    function renderFullCard(post) {
+      return `
+        <div class="card card-full">
+          <div class="card-user">
+            <div class="card-avatar">${post.avatar}</div>
+            <div class="card-nickname">${post.nickname}</div>
+            <div class="card-time">${timeAgo(post.fullAt)}</div>
+          </div>
+          <span class="status-badge badge-full">😋 満腹！</span>
+          <div class="card-text">${post.fullText}</div>
+          ${renderReactions(post.reactions, 'full', post.id)}
+        </div>
+      `;
+    }
+
+    // ループモード用：未完
+    function renderLoopPendingCard(post) {
+      return `
+        <div class="card card-loop-pending">
+          <div class="card-user">
+            <div class="card-avatar">${post.avatar}</div>
+            <div class="card-nickname">${post.nickname}</div>
+            <div class="card-time">${timeAgo(post.hungryAt)}</div>
+          </div>
+          <div class="loop-pair">
+            <div class="loop-step loop-step-hungry">
+              <div class="loop-step-label">🍚 空腹中</div>
+              <div class="loop-step-text">${post.hungryText}</div>
+            </div>
+            <div class="loop-arrow">⬇️</div>
+            <div class="loop-step loop-step-full" style="opacity: 0.4; border: 2px dashed #C8E6C9;">
+              <div class="loop-step-label">😋 ???</div>
+              <div class="loop-step-text" style="color: #999;">この人はまだ空腹中...</div>
+            </div>
+          </div>
+          <div class="loop-pending-footer">
+            <span class="loop-pending-dots"><span></span><span></span><span></span></span>
+            ⏱ ${timeAgo(post.hungryAt)}から空腹中...
+          </div>
+          ${renderReactions(post.reactions, 'hungry', post.id)}
+        </div>
+      `;
+    }
+
+    // ループモード用：完成
+    function renderLoopCompleteCard(post) {
+      const hungryTime = new Date(post.hungryAt);
+      const fullTime = new Date(post.fullAt);
+      const durationMs = fullTime - hungryTime;
+      const durationMin = Math.floor(durationMs / 60000);
+      let durationText = '';
+      if (durationMin < 60) {
+        durationText = `${durationMin}分で満腹に`;
+      } else {
+        const h = Math.floor(durationMin / 60);
+        const m = durationMin % 60;
+        durationText = m > 0 ? `${h}時間${m}分で満腹に` : `${h}時間で満腹に`;
+      }
+
+      return `
+        <div class="card card-full card-loop-complete">
+          <div class="card-user">
+            <div class="card-avatar">${post.avatar}</div>
+            <div class="card-nickname">${post.nickname}</div>
+            <div class="card-time">${timeAgo(post.fullAt)}</div>
+          </div>
+          <div class="loop-complete-header">🔄 ループ完成！</div>
+          <div class="loop-pair">
+            <div class="loop-step loop-step-hungry">
+              <div class="loop-step-label">🍚 空腹だった時</div>
+              <div class="loop-step-text">${post.hungryText}</div>
+            </div>
+            <div class="loop-arrow">⬇️</div>
+            <div class="loop-duration">⏱ ${durationText}</div>
+            <div class="loop-step loop-step-full">
+              <div class="loop-step-label">😋 満腹になった！</div>
+              <div class="loop-step-text">${post.fullText}</div>
+            </div>
+          </div>
+          ${renderReactions(post.reactions, 'full', post.id)}
+        </div>
+      `;
+    }
+
+    // ===== モードカウント更新 =====
+    function updateModeCounts() {
+      document.getElementById('count-loop').textContent = posts.length;
+      document.getElementById('count-hungry').textContent = posts.filter(p => p.status === 'hungry').length;
+      document.getElementById('count-full').textContent = posts.filter(p => p.status === 'full').length;
+    }
+
+    // ===== タイムライン描画 =====
+    function renderTimeline() {
+      const timeline = document.getElementById('timeline');
+      let filtered = [];
+
+      if (currentMode === 'hungry') {
+        filtered = posts.filter(p => p.status === 'hungry');
+      } else if (currentMode === 'full') {
+        filtered = posts.filter(p => p.status === 'full');
+      } else {
+        filtered = [...posts];
+      }
+
+      filtered.sort((a, b) => {
+        const timeA = new Date(a.status === 'full' ? a.fullAt : a.hungryAt);
+        const timeB = new Date(b.status === 'full' ? b.fullAt : b.hungryAt);
+        return timeB - timeA;
+      });
+
+      updateModeCounts();
+
+      if (filtered.length === 0) {
+        timeline.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🍽️</div>
+            <div class="empty-state-text">まだ投稿がないよ<br>最初のループを始めよう！</div>
+          </div>
+        `;
+        return;
+      }
+
+      timeline.innerHTML = filtered.map(post => {
+        if (currentMode === 'hungry') return renderHungryCard(post);
+        if (currentMode === 'full') return renderFullCard(post);
+        return post.status === 'hungry' ? renderLoopPendingCard(post) : renderLoopCompleteCard(post);
+      }).join('');
+    }
+
+    // ===== マイページ描画 =====
+    function renderMyPage() {
+      const myPosts = posts.filter(p => p.userId === currentUser?.id);
+      const myTimeline = document.getElementById('my-timeline');
+
+      document.getElementById('my-loop-count').textContent = myPosts.filter(p => p.status === 'full').length;
+      document.getElementById('my-hungry-count').textContent = myPosts.filter(p => p.status === 'hungry').length;
+
+      if (myPosts.length === 0) {
+        myTimeline.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <div class="empty-state-text">まだ投稿がないよ。<br>最初のループを始めよう！</div>
+          </div>
+        `;
+        return;
+      }
+
+      myPosts.sort((a, b) => {
+        const timeA = new Date(a.status === 'full' ? a.fullAt : a.hungryAt);
+        const timeB = new Date(b.status === 'full' ? b.fullAt : b.hungryAt);
+        return timeB - timeA;
+      });
+
+      myTimeline.innerHTML = myPosts.map(post =>
+        post.status === 'hungry' ? renderLoopPendingCard(post) : renderLoopCompleteCard(post)
+      ).join('');
+    }
+
+    // ===== モード切替 =====
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        renderTimeline();
+      });
+    });
+
+    // ===== タブ切替 =====
+    document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(btn.dataset.page).classList.add('active');
+        currentPage = btn.dataset.page;
+        if (currentPage === 'page-mypage') renderMyPage();
+      });
+    });
+
+    // ===== 投稿モーダル =====
+    const modalOverlay = document.getElementById('modal-overlay');
+    const formHungry = document.getElementById('form-hungry');
+    const formFull = document.getElementById('form-full');
+
+    document.getElementById('btn-open-post').addEventListener('click', () => {
+      if (myHungryPostId) {
+        formHungry.style.display = 'none';
+        formFull.style.display = 'block';
+      } else {
+        formHungry.style.display = 'block';
+        formFull.style.display = 'none';
+      }
+      modalOverlay.classList.add('show');
+    });
+
+    function closeModal() {
+      modalOverlay.classList.remove('show');
+      document.getElementById('hungry-text').value = '';
+      document.getElementById('full-text').value = '';
+      document.getElementById('hungry-char-count').textContent = '0';
+      document.getElementById('full-char-count').textContent = '0';
+    }
+
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+    document.getElementById('btn-cancel-hungry').addEventListener('click', closeModal);
+    document.getElementById('btn-cancel-full').addEventListener('click', closeModal);
+
+    // 文字数カウント
+    document.getElementById('hungry-text').addEventListener('input', (e) => {
+      const count = e.target.value.length;
+      const el = document.getElementById('hungry-char-count');
+      el.textContent = count;
+      el.parentElement.classList.toggle('over', count > 140);
+    });
+    document.getElementById('full-text').addEventListener('input', (e) => {
+      const count = e.target.value.length;
+      const el = document.getElementById('full-char-count');
+      el.textContent = count;
+      el.parentElement.classList.toggle('over', count > 140);
+    });
+
+    // ===== 空腹投稿（DB保存） =====
+    document.getElementById('btn-post-hungry').addEventListener('click', async () => {
+      const text = document.getElementById('hungry-text').value.trim();
+      if (!text) { showToast('テキストを入力してね！'); return; }
+      if (text.length > 140) { showToast('140文字以内にしてね！'); return; }
+
+      const { data, error } = await db.from('posts').insert({
+        user_id: currentUser.id,
+        status: 'hungry',
+        hungry_text: text,
+        hungry_at: new Date().toISOString(),
+      }).select().single();
+
+      if (error) {
+        showToast('投稿に失敗しました...');
+        console.error(error);
+        return;
+      }
+
+      closeModal();
+      await loadPosts();
+      showToast('🍚 お腹減った！を投稿したよ');
+    });
+
+    // ===== 満腹投稿（DB更新） =====
+    document.getElementById('btn-post-full').addEventListener('click', async () => {
+      const text = document.getElementById('full-text').value.trim();
+      if (!text) { showToast('テキストを入力してね！'); return; }
+      if (text.length > 140) { showToast('140文字以内にしてね！'); return; }
+
+      const { error } = await db.from('posts')
+        .update({
+          status: 'full',
+          full_text: text,
+          full_at: new Date().toISOString(),
+        })
+        .eq('id', myHungryPostId);
+
+      if (error) {
+        showToast('投稿に失敗しました...');
+        console.error(error);
+        return;
+      }
+
+      closeModal();
+      await loadPosts();
+      showToast('😋 ループ完成！満腹になったね！');
+    });
+
+    // ===== アプリ起動 =====
+    initAuth();
+  </script>
+</body>
+</html>

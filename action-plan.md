@@ -32,11 +32,10 @@
 - [ ] **1-5. 写真投稿を実装する**
   - Supabase Storage に画像保存
   - 写真の表示・リサイズ
-- [ ] **1-6. GitHub リポジトリを作成する**
-  - コード管理を始める
-- [ ] **1-7. Cloudflare Pages にデプロイする**
-  - GitHub連携で自動デプロイ
-  - まずは *.pages.dev で公開
+- [x] **1-6. GitHub リポジトリを作成する**（完了: 3/21）
+  - https://github.com/gen8-riv/harapeko-loop
+- [x] **1-7. Cloudflare にデプロイする**（完了: 3/21）
+  - https://harapeko-loop.gen8-riv.workers.dev/
 - [ ] **1-8. PWA対応の最低限を入れる**
   - manifest.json、アイコン、Service Worker
 - [ ] **1-9. Google OAuth を追加する**

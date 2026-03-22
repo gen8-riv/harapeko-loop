@@ -705,6 +705,39 @@
       margin-top: 8px;
     }
 
+    /* ===== 投稿削除ボタン ===== */
+    .card-delete {
+      border: none;
+      background: none;
+      color: #CCC;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      margin-left: 8px;
+      transition: color 0.2s;
+    }
+    .card-delete:hover {
+      color: #E53935;
+    }
+
+    /* ===== ログアウトボタン ===== */
+    .danger-btn {
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 12px;
+      background: white;
+      font-size: 13px;
+      color: #E53935;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .danger-btn:hover {
+      border-color: #E53935;
+      background: #FFF5F5;
+    }
+
     /* ===== ローディング ===== */
     .loading-screen {
       position: fixed;
@@ -846,9 +879,9 @@
   <div class="page" id="page-mypage">
     <div class="mypage">
       <div class="profile-card">
-        <div class="profile-avatar">😊</div>
-        <div class="profile-nickname">ずんだもん</div>
-        <div class="profile-bio">ずんだもちとお腹いっぱいが好きなのだ</div>
+        <div class="profile-avatar" id="mypage-avatar">😊</div>
+        <div class="profile-nickname" id="mypage-nickname">-</div>
+        <div class="profile-bio" id="mypage-bio"></div>
         <div class="profile-stats">
           <div class="stat-item">
             <div class="stat-number" id="my-loop-count">3</div>
@@ -875,6 +908,9 @@
         </button>
         <button class="logout-btn" id="btn-edit-profile">
           ✏️ プロフィールを変更
+        </button>
+        <button class="danger-btn" id="btn-logout">
+          🚪 ログアウト（データは削除されます）
         </button>
       </div>
     </div>
@@ -1014,8 +1050,17 @@
 
     function updateProfileUI() {
       if (!currentProfile) return;
-      document.querySelector('.profile-avatar').textContent = currentProfile.avatar_emoji;
-      document.querySelector('.profile-nickname').textContent = currentProfile.nickname;
+      // マイページのプロフィール表示を更新
+      document.getElementById('mypage-avatar').textContent = currentProfile.avatar_emoji;
+      document.getElementById('mypage-nickname').textContent = currentProfile.nickname;
+
+      // 利用日数を計算（アカウント作成日から）
+      if (currentProfile.created_at) {
+        const created = new Date(currentProfile.created_at);
+        const now = new Date();
+        const days = Math.max(1, Math.floor((now - created) / (1000 * 60 * 60 * 24)) + 1);
+        document.getElementById('my-days').textContent = days;
+      }
     }
 
     // ===== ニックネーム設定 =====
@@ -1202,6 +1247,12 @@
 
     // ===== カードのHTML生成 =====
 
+    // 削除ボタン（自分の投稿のみ表示）
+    function renderDeleteBtn(post) {
+      if (post.userId !== currentUser?.id) return '';
+      return `<button class="card-delete" onclick="deletePost('${post.id}')" title="削除">✕</button>`;
+    }
+
     // はらぺこモード用
     function renderHungryCard(post) {
       return `
@@ -1210,6 +1261,7 @@
             <div class="card-avatar">${post.avatar}</div>
             <div class="card-nickname">${post.nickname}</div>
             <div class="card-time">${timeAgo(post.hungryAt)}</div>
+            ${renderDeleteBtn(post)}
           </div>
           <span class="status-badge badge-hungry">🍚 空腹中</span>
           <div class="card-text card-hungry-text">${post.hungryText}</div>
@@ -1227,6 +1279,7 @@
             <div class="card-avatar">${post.avatar}</div>
             <div class="card-nickname">${post.nickname}</div>
             <div class="card-time">${timeAgo(post.fullAt)}</div>
+            ${renderDeleteBtn(post)}
           </div>
           <span class="status-badge badge-full">😋 満腹！</span>
           <div class="card-text">${post.fullText}</div>
@@ -1243,6 +1296,7 @@
             <div class="card-avatar">${post.avatar}</div>
             <div class="card-nickname">${post.nickname}</div>
             <div class="card-time">${timeAgo(post.hungryAt)}</div>
+            ${renderDeleteBtn(post)}
           </div>
           <div class="loop-pair">
             <div class="loop-step loop-step-hungry">
@@ -1250,9 +1304,8 @@
               <div class="loop-step-text">${post.hungryText}</div>
             </div>
             <div class="loop-arrow">⬇️</div>
-            <div class="loop-step loop-step-full" style="opacity: 0.4; border: 2px dashed #C8E6C9;">
-              <div class="loop-step-label">😋 ???</div>
-              <div class="loop-step-text" style="color: #999;">この人はまだ空腹中...</div>
+            <div class="loop-step loop-step-full" style="opacity: 0.25; border: 2px dashed #E0E0E0; background: rgba(0,0,0,0.02);">
+              <div class="loop-step-label" style="color: #CCC;">😵 ・・・</div>
             </div>
           </div>
           <div class="loop-pending-footer">
@@ -1285,6 +1338,7 @@
             <div class="card-avatar">${post.avatar}</div>
             <div class="card-nickname">${post.nickname}</div>
             <div class="card-time">${timeAgo(post.fullAt)}</div>
+            ${renderDeleteBtn(post)}
           </div>
           <div class="loop-complete-header">🔄 ループ完成！</div>
           <div class="loop-pair">
@@ -1491,6 +1545,37 @@
       closeModal();
       await loadPosts();
       showToast('😋 ループ完成！満腹になったね！');
+    });
+
+    // ===== 投稿削除 =====
+    async function deletePost(postId) {
+      if (!confirm('この投稿を削除しますか？')) return;
+
+      const { error } = await db.from('posts')
+        .delete()
+        .eq('id', postId)
+        .eq('user_id', currentUser.id);
+
+      if (error) {
+        showToast('削除に失敗しました...');
+        console.error(error);
+        return;
+      }
+
+      await loadPosts();
+      showToast('投稿を削除しました');
+    }
+
+    // ===== ログアウト =====
+    document.getElementById('btn-logout')?.addEventListener('click', async () => {
+      if (!confirm('ログアウトすると匿名アカウントのデータは削除されます。よろしいですか？')) return;
+
+      await db.auth.signOut();
+      currentUser = null;
+      currentProfile = null;
+      posts = [];
+      myHungryPostId = null;
+      location.reload();
     });
 
     // ===== アプリ起動 =====

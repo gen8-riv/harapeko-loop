@@ -45,15 +45,15 @@
       display: flex;
       background: #EFEFEF;
       border-radius: 12px;
-      padding: 3px;
+      padding: 4px;
       margin: 12px 16px;
-      gap: 3px;
+      gap: 4px;
     }
     .mode-btn {
       flex: 1;
       border: none;
       background: transparent;
-      padding: 9px 8px;
+      padding: 8px 8px;
       border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
@@ -110,18 +110,18 @@
     .card-user {
       display: flex;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .card-avatar {
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background: #F0F0F0;
+      background: #F5F0ED;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
-      margin-right: 10px;
+      margin-right: 8px;
       flex-shrink: 0;
     }
     .card-nickname {
@@ -130,7 +130,7 @@
     }
     .card-time {
       font-size: 12px;
-      color: #999;
+      color: #A09890;
       margin-left: auto;
     }
 
@@ -139,8 +139,8 @@
       display: inline-block;
       font-size: 11px;
       font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 20px;
+      padding: 4px 12px;
+      border-radius: 10px;
       margin-bottom: 8px;
     }
     .badge-hungry {
@@ -166,9 +166,9 @@
       margin-top: 8px;
     }
     .loop-step {
-      padding: 10px 12px;
-      border-radius: 10px;
-      margin-bottom: 6px;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 8px;
     }
     .loop-step-hungry {
       background: #FFF6F3;
@@ -177,7 +177,7 @@
       background: #F2F9F3;
     }
     .loop-step-label {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       margin-bottom: 4px;
     }
@@ -197,8 +197,8 @@
     .loop-pending-footer {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 10px;
+      gap: 8px;
+      margin-top: 12px;
       padding: 8px 12px;
       background: #FFF6F3;
       border-radius: 10px;
@@ -208,11 +208,11 @@
     }
     .loop-pending-dots {
       display: inline-flex;
-      gap: 3px;
+      gap: 4px;
     }
     .loop-pending-dots span {
-      width: 5px;
-      height: 5px;
+      width: 4px;
+      height: 4px;
       background: #E8623E;
       border-radius: 50%;
       animation: dotPulse 1.4s infinite;
@@ -232,27 +232,29 @@
     .loop-complete-header {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       font-size: 12px;
       font-weight: 700;
       color: #5BAD6F;
-      margin-bottom: 10px;
-      padding: 4px 10px;
+      margin-bottom: 12px;
+      padding: 4px 12px;
       background: #EDF7EF;
       border-radius: 8px;
       width: fit-content;
     }
     .loop-duration {
-      font-size: 11px;
+      font-size: 12px;
       color: #999;
       text-align: center;
-      margin: 2px 0;
+      margin: 4px 0;
     }
 
     .loop-arrow {
       text-align: center;
-      font-size: 18px;
-      margin: 2px 0;
+      margin: 4px 0;
+      color: #CCC;
+      font-size: 14px;
+      line-height: 1;
     }
 
     /* 写真プレースホルダー */
@@ -281,7 +283,7 @@
     .reactions {
       display: flex;
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 12px;
       flex-wrap: wrap;
     }
     .reaction-btn {
@@ -290,8 +292,8 @@
       gap: 4px;
       background: rgba(255,255,255,0.7);
       border: 1.5px solid #E0E0E0;
-      border-radius: 20px;
-      padding: 5px 12px;
+      border-radius: 10px;
+      padding: 4px 12px;
       font-size: 13px;
       cursor: pointer;
       transition: all 0.2s;
@@ -1423,7 +1425,7 @@
               <div class="loop-step-text">${post.hungryText}</div>
               ${renderImage(post.hungryImageUrl)}
             </div>
-            <div class="loop-arrow">⬇️</div>
+            <div class="loop-arrow">↓</div>
             <div class="loop-step loop-step-full" style="opacity: 0.25; border: 2px dashed #E0E0E0; background: rgba(0,0,0,0.02);">
               <div class="loop-step-label" style="color: #CCC;">😵 ・・・</div>
             </div>
@@ -1467,7 +1469,7 @@
               <div class="loop-step-text">${post.hungryText}</div>
               ${renderImage(post.hungryImageUrl)}
             </div>
-            <div class="loop-arrow">⬇️</div>
+            <div class="loop-arrow">↓</div>
             <div class="loop-duration">⏱ ${durationText}</div>
             <div class="loop-step loop-step-full">
               <div class="loop-step-label">😋 満腹になった！</div>

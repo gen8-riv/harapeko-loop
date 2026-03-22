@@ -10,8 +10,8 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-      background: #FFF8F0;
-      color: #333;
+      background: #F7F7F7;
+      color: #2D2D2D;
       max-width: 480px;
       margin: 0 auto;
       min-height: 100dvh;
@@ -21,55 +21,64 @@
 
     /* ===== ヘッダー ===== */
     .header {
-      background: linear-gradient(135deg, #FF6B35, #FF8C42);
-      color: white;
-      padding: 16px 20px;
+      background: #FFFFFF;
+      color: #2D2D2D;
+      padding: 14px 20px;
       text-align: center;
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+      border-bottom: 1px solid #EFEFEF;
     }
     .header h1 {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
     .header-emoji {
-      font-size: 24px;
-      margin-right: 6px;
+      font-size: 20px;
+      margin-right: 4px;
     }
 
     /* ===== モード切替トグル ===== */
     .mode-toggle {
       display: flex;
-      background: #F5E6D3;
+      background: #EFEFEF;
       border-radius: 12px;
-      padding: 4px;
+      padding: 3px;
       margin: 12px 16px;
-      gap: 4px;
+      gap: 3px;
     }
     .mode-btn {
       flex: 1;
       border: none;
       background: transparent;
-      padding: 10px 8px;
+      padding: 9px 8px;
       border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
-      color: #999;
+      color: #AAAAAA;
       cursor: pointer;
       transition: all 0.3s ease;
     }
     .mode-btn.active {
       background: white;
-      color: #FF6B35;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      color: #E8623E;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     }
 
     /* ===== タイムライン ===== */
     .page { display: none; padding-bottom: 80px; }
     .page.active { display: block; }
+
+    .mode-description {
+      text-align: center;
+      font-size: 11px;
+      color: #AAAAAA;
+      margin: -4px 16px 12px;
+      line-height: 1.5;
+      transition: opacity 0.3s ease;
+    }
 
     .timeline {
       padding: 0 16px 16px;
@@ -79,8 +88,9 @@
     .card {
       border-radius: 16px;
       padding: 16px;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+      background: #FFFFFF;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
       transition: transform 0.2s;
     }
     .card:active {
@@ -89,14 +99,12 @@
 
     /* 空腹カード */
     .card-hungry {
-      background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
-      border-left: 4px solid #FF6B35;
+      border-left: 3px solid #E8623E;
     }
 
     /* 満腹カード（ループ完成） */
     .card-full {
-      background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
-      border-left: 4px solid #4CAF50;
+      border-left: 3px solid #5BAD6F;
     }
 
     .card-user {
@@ -108,16 +116,13 @@
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background: #FFD7C4;
+      background: #F0F0F0;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
       margin-right: 10px;
       flex-shrink: 0;
-    }
-    .card-full .card-avatar {
-      background: #A5D6A7;
     }
     .card-nickname {
       font-weight: 600;
@@ -139,12 +144,12 @@
       margin-bottom: 8px;
     }
     .badge-hungry {
-      background: #FF6B35;
-      color: white;
+      background: #FFF0EB;
+      color: #E8623E;
     }
     .badge-full {
-      background: #4CAF50;
-      color: white;
+      background: #EDF7EF;
+      color: #5BAD6F;
     }
 
     .card-text {
@@ -153,7 +158,7 @@
       margin-bottom: 8px;
     }
     .card-hungry-text {
-      color: #BF360C;
+      color: #2D2D2D;
     }
 
     /* ループ完成のビフォーアフター */
@@ -166,27 +171,27 @@
       margin-bottom: 6px;
     }
     .loop-step-hungry {
-      background: rgba(255, 107, 53, 0.12);
+      background: #FFF6F3;
     }
     .loop-step-full {
-      background: rgba(76, 175, 80, 0.12);
+      background: #F2F9F3;
     }
     .loop-step-label {
       font-size: 11px;
       font-weight: 700;
       margin-bottom: 4px;
     }
-    .loop-step-hungry .loop-step-label { color: #FF6B35; }
-    .loop-step-full .loop-step-label { color: #4CAF50; }
+    .loop-step-hungry .loop-step-label { color: #E8623E; }
+    .loop-step-full .loop-step-label { color: #5BAD6F; }
     .loop-step-text {
       font-size: 14px;
       line-height: 1.5;
     }
     /* ループモード：未完ループカード */
     .card-loop-pending {
-      background: linear-gradient(135deg, #FFF8E1, #FFECB3);
-      border: 2px dashed #FFB74D;
-      border-left: 4px solid #FF6B35;
+      background: #FFFFFF;
+      border: 1.5px dashed #DDD;
+      border-left: 3px solid #E8623E;
       position: relative;
     }
     .loop-pending-footer {
@@ -195,10 +200,10 @@
       gap: 6px;
       margin-top: 10px;
       padding: 8px 12px;
-      background: rgba(255, 183, 77, 0.15);
+      background: #FFF6F3;
       border-radius: 10px;
       font-size: 13px;
-      color: #E65100;
+      color: #E8623E;
       font-weight: 600;
     }
     .loop-pending-dots {
@@ -206,9 +211,9 @@
       gap: 3px;
     }
     .loop-pending-dots span {
-      width: 6px;
-      height: 6px;
-      background: #FFB74D;
+      width: 5px;
+      height: 5px;
+      background: #E8623E;
       border-radius: 50%;
       animation: dotPulse 1.4s infinite;
     }
@@ -222,7 +227,7 @@
     /* ループモード：完成ループカード強化 */
     .card-loop-complete {
       border: none;
-      box-shadow: 0 3px 16px rgba(76, 175, 80, 0.15);
+      box-shadow: 0 1px 6px rgba(91, 173, 111, 0.1);
     }
     .loop-complete-header {
       display: flex;
@@ -230,10 +235,10 @@
       gap: 6px;
       font-size: 12px;
       font-weight: 700;
-      color: #2E7D32;
+      color: #5BAD6F;
       margin-bottom: 10px;
       padding: 4px 10px;
-      background: rgba(76, 175, 80, 0.1);
+      background: #EDF7EF;
       border-radius: 8px;
       width: fit-content;
     }
@@ -257,20 +262,17 @@
       border-radius: 12px;
       object-fit: cover;
       margin-top: 8px;
-      background: linear-gradient(135deg, #FFE0B2, #FFCC80);
+      background: #F0F0F0;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 48px;
     }
-    .card-full .card-photo {
-      background: linear-gradient(135deg, #C8E6C9, #A5D6A7);
-    }
 
     /* 経過時間 */
     .elapsed-time {
       font-size: 12px;
-      color: #FF6B35;
+      color: #E8623E;
       font-weight: 600;
       margin-top: 4px;
     }
@@ -295,12 +297,12 @@
       transition: all 0.2s;
     }
     .reaction-btn:hover {
-      border-color: #FF6B35;
+      border-color: #E8623E;
       transform: scale(1.05);
     }
     .reaction-btn.reacted {
-      border-color: #FF6B35;
-      background: #FFF3E0;
+      border-color: #E8623E;
+      background: #FFF6F3;
     }
     .reaction-count {
       font-size: 12px;
@@ -336,30 +338,30 @@
       color: #BBB;
       transition: color 0.2s;
     }
-    .nav-btn.active { color: #FF6B35; }
+    .nav-btn.active { color: #2D2D2D; }
     .nav-btn-icon { font-size: 24px; }
     .nav-btn-label { font-size: 10px; font-weight: 600; margin-top: 2px; }
 
     /* 中央の投稿ボタン */
     .nav-post-btn {
-      width: 56px;
-      height: 56px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #FF6B35, #FF8C42);
-      border: 4px solid white;
+      background: #E8623E;
+      border: 3px solid white;
       color: white;
-      font-size: 28px;
+      font-size: 26px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
-      margin-top: -24px;
+      box-shadow: 0 2px 8px rgba(232, 98, 62, 0.3);
+      margin-top: -22px;
       transition: transform 0.2s, box-shadow 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .nav-post-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 16px rgba(255, 107, 53, 0.5);
+      transform: scale(1.08);
+      box-shadow: 0 4px 12px rgba(232, 98, 62, 0.35);
     }
     .nav-post-btn:active {
       transform: scale(0.95);
@@ -406,8 +408,8 @@
       text-align: center;
       margin-bottom: 20px;
     }
-    .modal-title-hungry { color: #FF6B35; }
-    .modal-title-full { color: #4CAF50; }
+    .modal-title-hungry { color: #E8623E; }
+    .modal-title-full { color: #5BAD6F; }
 
     .form-group {
       margin-bottom: 16px;
@@ -432,10 +434,10 @@
     }
     .form-textarea:focus {
       outline: none;
-      border-color: #FF6B35;
+      border-color: #E8623E;
     }
     .form-textarea.full-mode:focus {
-      border-color: #4CAF50;
+      border-color: #5BAD6F;
     }
     .char-count {
       text-align: right;
@@ -460,11 +462,48 @@
       transition: border-color 0.2s, background 0.2s;
     }
     .photo-upload:hover {
-      border-color: #FF6B35;
-      background: #FFF8F0;
+      border-color: #E8623E;
+      background: #FFF6F3;
     }
     .photo-upload-icon { font-size: 32px; }
     .photo-upload-text { font-size: 13px; }
+    .photo-preview-container {
+      position: relative;
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .photo-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      display: block;
+    }
+    .photo-remove {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* タイムライン上の投稿写真 */
+    .card-image {
+      width: 100%;
+      max-height: 240px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-top: 10px;
+    }
 
     .submit-btn {
       width: 100%;
@@ -480,8 +519,8 @@
     }
     .submit-btn:hover { opacity: 0.9; }
     .submit-btn:active { transform: scale(0.98); }
-    .submit-btn-hungry { background: linear-gradient(135deg, #FF6B35, #FF8C42); }
-    .submit-btn-full { background: linear-gradient(135deg, #4CAF50, #66BB6A); }
+    .submit-btn-hungry { background: #E8623E; }
+    .submit-btn-full { background: #5BAD6F; }
 
     .cancel-btn {
       width: 100%;
@@ -511,7 +550,7 @@
       width: 72px;
       height: 72px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #FFD7C4, #FFAB91);
+      background: #F0F0F0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -535,7 +574,7 @@
     .stat-number {
       font-size: 24px;
       font-weight: 700;
-      color: #FF6B35;
+      color: #E8623E;
     }
     .stat-label {
       font-size: 11px;
@@ -613,7 +652,7 @@
       padding: 0 5px;
     }
     .mode-btn.active .mode-count {
-      background: #FF6B35;
+      background: #E8623E;
       color: white;
     }
 
@@ -690,8 +729,8 @@
       transition: all 0.2s;
     }
     .login-btn:hover {
-      border-color: #FF6B35;
-      color: #FF6B35;
+      border-color: #E8623E;
+      color: #E8623E;
     }
     .logout-btn {
       width: 100%;
@@ -780,7 +819,7 @@
     .nickname-card h2 {
       font-size: 18px;
       margin-bottom: 8px;
-      color: #FF6B35;
+      color: #E8623E;
     }
     .nickname-card p {
       font-size: 13px;
@@ -808,8 +847,8 @@
       justify-content: center;
     }
     .emoji-option.selected {
-      border-color: #FF6B35;
-      background: #FFF3E0;
+      border-color: #E8623E;
+      background: #FFF6F3;
       transform: scale(1.15);
     }
     .nickname-input {
@@ -825,7 +864,7 @@
     }
     .nickname-input:focus {
       outline: none;
-      border-color: #FF6B35;
+      border-color: #E8623E;
     }
   </style>
 </head>
@@ -872,6 +911,7 @@
       <button class="mode-btn" data-mode="hungry">🍚 はらぺこ <span class="mode-count" id="count-hungry"></span></button>
       <button class="mode-btn" data-mode="full">😋 まんぷく <span class="mode-count" id="count-full"></span></button>
     </div>
+    <div class="mode-description" id="mode-description">空腹→満腹の気持ちの変化を楽しむモード</div>
     <div class="timeline" id="timeline"></div>
   </div>
 
@@ -931,10 +971,12 @@
         </div>
         <div class="form-group">
           <label class="form-label">写真（任意）</label>
-          <div class="photo-upload" id="hungry-photo-upload">
+          <input type="file" id="hungry-file-input" accept="image/*" style="display:none">
+          <div class="photo-upload" id="hungry-photo-upload" onclick="document.getElementById('hungry-file-input').click()">
             <div class="photo-upload-icon">📷</div>
             <div class="photo-upload-text">空の冷蔵庫とか撮って📸</div>
           </div>
+          <div id="hungry-photo-preview" style="display:none"></div>
         </div>
         <button class="submit-btn submit-btn-hungry" id="btn-post-hungry">お腹減った！を投稿する 🍚</button>
         <button class="cancel-btn" id="btn-cancel-hungry">やめとく</button>
@@ -950,10 +992,12 @@
         </div>
         <div class="form-group">
           <label class="form-label">料理の写真（任意）</label>
-          <div class="photo-upload" id="full-photo-upload">
+          <input type="file" id="full-file-input" accept="image/*" style="display:none">
+          <div class="photo-upload" id="full-photo-upload" onclick="document.getElementById('full-file-input').click()">
             <div class="photo-upload-icon">📸</div>
             <div class="photo-upload-text">おいしそうな写真を撮ろう🍽️</div>
           </div>
+          <div id="full-photo-preview" style="display:none"></div>
         </div>
         <button class="submit-btn submit-btn-full" id="btn-post-full">満腹になった！を投稿する 😋</button>
         <button class="cancel-btn" id="btn-cancel-full">まだ空腹中...</button>
@@ -1122,6 +1166,71 @@
       document.getElementById('loading-screen').classList.add('hidden');
     }
 
+    // ===== 写真アップロード =====
+    let hungrySelectedFile = null;
+    let fullSelectedFile = null;
+
+    function setupPhotoInput(fileInputId, uploadAreaId, previewId, type) {
+      const fileInput = document.getElementById(fileInputId);
+      const uploadArea = document.getElementById(uploadAreaId);
+      const previewArea = document.getElementById(previewId);
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // 5MB制限
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('写真は5MB以下にしてね！');
+          fileInput.value = '';
+          return;
+        }
+
+        if (type === 'hungry') hungrySelectedFile = file;
+        else fullSelectedFile = file;
+
+        // プレビュー表示
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          uploadArea.style.display = 'none';
+          previewArea.style.display = 'block';
+          previewArea.innerHTML = `
+            <div class="photo-preview-container">
+              <img src="${ev.target.result}" class="photo-preview">
+              <button class="photo-remove" onclick="removePhoto('${type}', '${fileInputId}', '${uploadAreaId}', '${previewId}')">✕</button>
+            </div>
+          `;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removePhoto(type, fileInputId, uploadAreaId, previewId) {
+      if (type === 'hungry') hungrySelectedFile = null;
+      else fullSelectedFile = null;
+      document.getElementById(fileInputId).value = '';
+      document.getElementById(uploadAreaId).style.display = '';
+      document.getElementById(previewId).style.display = 'none';
+      document.getElementById(previewId).innerHTML = '';
+    }
+
+    async function uploadPhoto(file) {
+      if (!file) return null;
+      const ext = file.name.split('.').pop();
+      const path = `${currentUser.id}/${Date.now()}.${ext}`;
+      const { error } = await db.storage.from('post-images').upload(path, file);
+      if (error) {
+        console.error('upload error:', error);
+        return null;
+      }
+      const { data: urlData } = db.storage.from('post-images').getPublicUrl(path);
+      return urlData.publicUrl;
+    }
+
+    // 初期化
+    setupPhotoInput('hungry-file-input', 'hungry-photo-upload', 'hungry-photo-preview', 'hungry');
+    setupPhotoInput('full-file-input', 'full-photo-upload', 'full-photo-preview', 'full');
+
     // ===== 投稿データの読み込み =====
     async function loadPosts() {
       // 投稿を取得（profilesをjoin）
@@ -1175,8 +1284,10 @@
           status: p.status,
           hungryText: p.hungry_text,
           hungryAt: p.hungry_at,
+          hungryImageUrl: p.hungry_image_url,
           fullText: p.full_text,
           fullAt: p.full_at,
+          fullImageUrl: p.full_image_url,
           reactions: {
             hungry: hungryReactions,
             full: fullReactions,
@@ -1247,6 +1358,12 @@
 
     // ===== カードのHTML生成 =====
 
+    // 画像表示ヘルパー
+    function renderImage(url) {
+      if (!url) return '';
+      return `<img src="${url}" class="card-image" loading="lazy">`;
+    }
+
     // 削除ボタン（自分の投稿のみ表示）
     function renderDeleteBtn(post) {
       if (post.userId !== currentUser?.id) return '';
@@ -1265,6 +1382,7 @@
           </div>
           <span class="status-badge badge-hungry">🍚 空腹中</span>
           <div class="card-text card-hungry-text">${post.hungryText}</div>
+          ${renderImage(post.hungryImageUrl)}
           <div class="elapsed-time">⏱ ${timeAgo(post.hungryAt)}から空腹中...</div>
           ${renderReactions(post.reactions, 'hungry', post.id)}
         </div>
@@ -1283,6 +1401,7 @@
           </div>
           <span class="status-badge badge-full">😋 満腹！</span>
           <div class="card-text">${post.fullText}</div>
+          ${renderImage(post.fullImageUrl)}
           ${renderReactions(post.reactions, 'full', post.id)}
         </div>
       `;
@@ -1302,6 +1421,7 @@
             <div class="loop-step loop-step-hungry">
               <div class="loop-step-label">🍚 空腹中</div>
               <div class="loop-step-text">${post.hungryText}</div>
+              ${renderImage(post.hungryImageUrl)}
             </div>
             <div class="loop-arrow">⬇️</div>
             <div class="loop-step loop-step-full" style="opacity: 0.25; border: 2px dashed #E0E0E0; background: rgba(0,0,0,0.02);">
@@ -1345,12 +1465,14 @@
             <div class="loop-step loop-step-hungry">
               <div class="loop-step-label">🍚 空腹だった時</div>
               <div class="loop-step-text">${post.hungryText}</div>
+              ${renderImage(post.hungryImageUrl)}
             </div>
             <div class="loop-arrow">⬇️</div>
             <div class="loop-duration">⏱ ${durationText}</div>
             <div class="loop-step loop-step-full">
               <div class="loop-step-label">😋 満腹になった！</div>
               <div class="loop-step-text">${post.fullText}</div>
+              ${renderImage(post.fullImageUrl)}
             </div>
           </div>
           ${renderReactions(post.reactions, 'full', post.id)}
@@ -1432,12 +1554,29 @@
       ).join('');
     }
 
+    // ===== モード説明文 =====
+    const MODE_DESCRIPTIONS = {
+      loop: '空腹→満腹の気持ちの変化を楽しむモード',
+      hungry: 'お腹ペコペコな人たちを眺めて共感するモード',
+      full: '満腹で幸せそうな人たちを眺めるモード',
+    };
+
+    function updateModeDescription() {
+      const el = document.getElementById('mode-description');
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.textContent = MODE_DESCRIPTIONS[currentMode];
+        el.style.opacity = '1';
+      }, 150);
+    }
+
     // ===== モード切替 =====
     document.querySelectorAll('.mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentMode = btn.dataset.mode;
+        updateModeDescription();
         renderTimeline();
       });
     });
@@ -1476,6 +1615,9 @@
       document.getElementById('full-text').value = '';
       document.getElementById('hungry-char-count').textContent = '0';
       document.getElementById('full-char-count').textContent = '0';
+      // 写真プレビューをリセット
+      removePhoto('hungry', 'hungry-file-input', 'hungry-photo-upload', 'hungry-photo-preview');
+      removePhoto('full', 'full-file-input', 'full-photo-upload', 'full-photo-preview');
     }
 
     modalOverlay.addEventListener('click', (e) => {
@@ -1504,12 +1646,22 @@
       if (!text) { showToast('テキストを入力してね！'); return; }
       if (text.length > 140) { showToast('140文字以内にしてね！'); return; }
 
+      const btn = document.getElementById('btn-post-hungry');
+      btn.disabled = true;
+      btn.textContent = 'アップロード中...';
+
+      const imageUrl = await uploadPhoto(hungrySelectedFile);
+
       const { data, error } = await db.from('posts').insert({
         user_id: currentUser.id,
         status: 'hungry',
         hungry_text: text,
+        hungry_image_url: imageUrl,
         hungry_at: new Date().toISOString(),
       }).select().single();
+
+      btn.disabled = false;
+      btn.textContent = 'お腹減った！を投稿する 🍚';
 
       if (error) {
         showToast('投稿に失敗しました...');
@@ -1517,6 +1669,7 @@
         return;
       }
 
+      hungrySelectedFile = null;
       closeModal();
       await loadPosts();
       showToast('🍚 お腹減った！を投稿したよ');
@@ -1528,13 +1681,23 @@
       if (!text) { showToast('テキストを入力してね！'); return; }
       if (text.length > 140) { showToast('140文字以内にしてね！'); return; }
 
+      const btn = document.getElementById('btn-post-full');
+      btn.disabled = true;
+      btn.textContent = 'アップロード中...';
+
+      const imageUrl = await uploadPhoto(fullSelectedFile);
+
       const { error } = await db.from('posts')
         .update({
           status: 'full',
           full_text: text,
+          full_image_url: imageUrl,
           full_at: new Date().toISOString(),
         })
         .eq('id', myHungryPostId);
+
+      btn.disabled = false;
+      btn.textContent = '満腹になった！を投稿する 😋';
 
       if (error) {
         showToast('投稿に失敗しました...');
@@ -1542,6 +1705,7 @@
         return;
       }
 
+      fullSelectedFile = null;
       closeModal();
       await loadPosts();
       showToast('😋 ループ完成！満腹になったね！');

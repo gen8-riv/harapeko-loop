@@ -82,6 +82,35 @@
 
     .timeline {
       padding: 0 16px 16px;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .timeline.slide-left {
+      animation: slideOutLeft 0.25s ease forwards;
+    }
+    .timeline.slide-right {
+      animation: slideOutRight 0.25s ease forwards;
+    }
+    .timeline.slide-in-left {
+      animation: slideInFromRight 0.25s ease forwards;
+    }
+    .timeline.slide-in-right {
+      animation: slideInFromLeft 0.25s ease forwards;
+    }
+    @keyframes slideOutLeft {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(-40px); opacity: 0; }
+    }
+    @keyframes slideOutRight {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(40px); opacity: 0; }
+    }
+    @keyframes slideInFromRight {
+      from { transform: translateX(40px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideInFromLeft {
+      from { transform: translateX(-40px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
 
     /* ===== 投稿カード共通 ===== */
@@ -952,7 +981,7 @@
           ✏️ プロフィールを変更
         </button>
         <button class="danger-btn" id="btn-logout">
-          🚪 ログアウト（データは削除されます）
+          🚪 ログアウト（アプリ内データは削除）
         </button>
       </div>
     </div>
@@ -1033,6 +1062,7 @@
     let currentMode = 'loop';
     let currentPage = 'page-timeline';
     let myHungryPostId = null;
+    let isModeSwitching = false;
 
     // ===== 経過時間の表示 =====
     function timeAgo(date) {
@@ -1132,6 +1162,8 @@
         return;
       }
 
+      const isEditingProfile = Boolean(currentProfile);
+
       const { error } = await db.from('profiles').upsert({
         id: currentUser.id,
         nickname: nickname,
@@ -1145,12 +1177,18 @@
         return;
       }
 
-      currentProfile = { id: currentUser.id, nickname, avatar_emoji: selectedEmoji };
+      currentProfile = {
+        ...currentProfile,
+        id: currentUser.id,
+        nickname,
+        avatar_emoji: selectedEmoji,
+        created_at: currentProfile?.created_at || new Date().toISOString(),
+      };
       document.getElementById('nickname-modal').classList.remove('show');
       updateProfileUI();
       hideLoading();
       await loadPosts();
-      showToast(`ようこそ、${nickname}さん！`);
+      showToast(isEditingProfile ? 'プロフィールを更新したよ' : `ようこそ、${nickname}さん！`);
     });
 
     // プロフィール変更
@@ -1223,7 +1261,7 @@
       const { error } = await db.storage.from('post-images').upload(path, file);
       if (error) {
         console.error('upload error:', error);
-        return null;
+        throw error;
       }
       const { data: urlData } = db.storage.from('post-images').getPublicUrl(path);
       return urlData.publicUrl;
@@ -1302,6 +1340,7 @@
       myHungryPostId = myHungryPost?.id || null;
 
       renderTimeline();
+      if (currentPage === 'page-mypage') renderMyPage();
     }
 
     // ===== リアクションスタンプのHTML =====
@@ -1329,32 +1368,42 @@
 
     // ===== リアクション送信 =====
     async function toggleReaction(postId, emoji, target, btn) {
+      if (btn.disabled) return;
       const isReacted = btn.classList.contains('reacted');
       const countEl = btn.querySelector('.reaction-count');
       let count = parseInt(countEl.textContent);
 
-      if (isReacted) {
-        // リアクション削除
-        await db.from('reactions')
-          .delete()
-          .eq('post_id', postId)
-          .eq('user_id', currentUser.id)
-          .eq('emoji', emoji)
-          .eq('target', target);
-        btn.classList.remove('reacted');
-        countEl.textContent = Math.max(0, count - 1);
-      } else {
-        // リアクション追加
-        const { error } = await db.from('reactions').insert({
-          post_id: postId,
-          user_id: currentUser.id,
-          emoji: emoji,
-          target: target,
-        });
-        if (!error) {
+      btn.disabled = true;
+
+      try {
+        if (isReacted) {
+          const { error } = await db.from('reactions')
+            .delete()
+            .eq('post_id', postId)
+            .eq('user_id', currentUser.id)
+            .eq('emoji', emoji)
+            .eq('target', target);
+
+          if (error) throw error;
+          btn.classList.remove('reacted');
+          countEl.textContent = Math.max(0, count - 1);
+        } else {
+          const { error } = await db.from('reactions').insert({
+            post_id: postId,
+            user_id: currentUser.id,
+            emoji: emoji,
+            target: target,
+          });
+
+          if (error) throw error;
           btn.classList.add('reacted');
           countEl.textContent = count + 1;
         }
+      } catch (error) {
+        showToast('リアクションに失敗しました...');
+        console.error(error);
+      } finally {
+        btn.disabled = false;
       }
     }
 
@@ -1572,16 +1621,85 @@
       }, 150);
     }
 
-    // ===== モード切替 =====
-    document.querySelectorAll('.mode-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
+    // ===== モード切替（アニメーション付き） =====
+    const MODES = ['loop', 'hungry', 'full'];
+
+    function switchMode(newMode, direction) {
+      if (newMode === currentMode || isModeSwitching) return;
+      isModeSwitching = true;
+      const timeline = document.getElementById('timeline');
+      timeline.classList.remove('slide-left', 'slide-right', 'slide-in-left', 'slide-in-right');
+
+      // スライドアウト
+      const outClass = direction === 'left' ? 'slide-left' : 'slide-right';
+      timeline.classList.add(outClass);
+
+      setTimeout(() => {
+        // モード変更 & 再描画
+        currentMode = newMode;
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentMode = btn.dataset.mode;
+        document.querySelector(`.mode-btn[data-mode="${newMode}"]`).classList.add('active');
         updateModeDescription();
         renderTimeline();
+
+        // スライドイン
+        timeline.classList.remove(outClass);
+        const inClass = direction === 'left' ? 'slide-in-left' : 'slide-in-right';
+        timeline.classList.add(inClass);
+        setTimeout(() => {
+          timeline.classList.remove(inClass);
+          isModeSwitching = false;
+        }, 250);
+      }, 250);
+    }
+
+    // ボタンクリックでの切替
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newMode = btn.dataset.mode;
+        if (newMode === currentMode) return;
+        const oldIndex = MODES.indexOf(currentMode);
+        const newIndex = MODES.indexOf(newMode);
+        switchMode(newMode, newIndex > oldIndex ? 'left' : 'right');
       });
     });
+
+    // ===== スワイプでモード切替 =====
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isSwiping = false;
+
+    const timelinePage = document.getElementById('page-timeline');
+
+    timelinePage.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      isSwiping = true;
+    }, { passive: true });
+
+    timelinePage.addEventListener('touchmove', (e) => {
+      if (!isSwiping) return;
+      // 縦スクロール中はスワイプ無効にする
+      const diffY = Math.abs(e.touches[0].clientY - touchStartY);
+      const diffX = Math.abs(e.touches[0].clientX - touchStartX);
+      if (diffY > diffX) isSwiping = false;
+    }, { passive: true });
+
+    timelinePage.addEventListener('touchend', (e) => {
+      if (!isSwiping) return;
+      isSwiping = false;
+      const diffX = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(diffX) < 60) return; // 60px未満は無視
+
+      const currentIndex = MODES.indexOf(currentMode);
+      if (diffX < 0 && currentIndex < MODES.length - 1) {
+        // 左スワイプ → 次のモード
+        switchMode(MODES[currentIndex + 1], 'left');
+      } else if (diffX > 0 && currentIndex > 0) {
+        // 右スワイプ → 前のモード
+        switchMode(MODES[currentIndex - 1], 'right');
+      }
+    }, { passive: true });
 
     // ===== タブ切替 =====
     document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
@@ -1647,34 +1765,37 @@
       const text = document.getElementById('hungry-text').value.trim();
       if (!text) { showToast('テキストを入力してね！'); return; }
       if (text.length > 140) { showToast('140文字以内にしてね！'); return; }
+      if (myHungryPostId) { showToast('先に今の空腹投稿を満腹にしてね！'); return; }
 
       const btn = document.getElementById('btn-post-hungry');
       btn.disabled = true;
       btn.textContent = 'アップロード中...';
 
-      const imageUrl = await uploadPhoto(hungrySelectedFile);
+      try {
+        const imageUrl = await uploadPhoto(hungrySelectedFile);
 
-      const { data, error } = await db.from('posts').insert({
-        user_id: currentUser.id,
-        status: 'hungry',
-        hungry_text: text,
-        hungry_image_url: imageUrl,
-        hungry_at: new Date().toISOString(),
-      }).select().single();
+        const { error } = await db.from('posts').insert({
+          user_id: currentUser.id,
+          status: 'hungry',
+          hungry_text: text,
+          hungry_image_url: imageUrl,
+          hungry_at: new Date().toISOString(),
+        });
 
-      btn.disabled = false;
-      btn.textContent = 'お腹減った！を投稿する 🍚';
+        if (error) throw error;
 
-      if (error) {
-        showToast('投稿に失敗しました...');
+        hungrySelectedFile = null;
+        closeModal();
+        await loadPosts();
+        showToast('🍚 お腹減った！を投稿したよ');
+      } catch (error) {
+        const message = hungrySelectedFile ? '写真または投稿の保存に失敗しました...' : '投稿に失敗しました...';
+        showToast(message);
         console.error(error);
-        return;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'お腹減った！を投稿する 🍚';
       }
-
-      hungrySelectedFile = null;
-      closeModal();
-      await loadPosts();
-      showToast('🍚 お腹減った！を投稿したよ');
     });
 
     // ===== 満腹投稿（DB更新） =====
@@ -1682,35 +1803,38 @@
       const text = document.getElementById('full-text').value.trim();
       if (!text) { showToast('テキストを入力してね！'); return; }
       if (text.length > 140) { showToast('140文字以内にしてね！'); return; }
+      if (!myHungryPostId) { showToast('先に空腹投稿をしてね！'); closeModal(); return; }
 
       const btn = document.getElementById('btn-post-full');
       btn.disabled = true;
       btn.textContent = 'アップロード中...';
 
-      const imageUrl = await uploadPhoto(fullSelectedFile);
+      try {
+        const imageUrl = await uploadPhoto(fullSelectedFile);
 
-      const { error } = await db.from('posts')
-        .update({
-          status: 'full',
-          full_text: text,
-          full_image_url: imageUrl,
-          full_at: new Date().toISOString(),
-        })
-        .eq('id', myHungryPostId);
+        const { error } = await db.from('posts')
+          .update({
+            status: 'full',
+            full_text: text,
+            full_image_url: imageUrl,
+            full_at: new Date().toISOString(),
+          })
+          .eq('id', myHungryPostId);
 
-      btn.disabled = false;
-      btn.textContent = '満腹になった！を投稿する 😋';
+        if (error) throw error;
 
-      if (error) {
-        showToast('投稿に失敗しました...');
+        fullSelectedFile = null;
+        closeModal();
+        await loadPosts();
+        showToast('😋 ループ完成！満腹になったね！');
+      } catch (error) {
+        const message = fullSelectedFile ? '写真または投稿の保存に失敗しました...' : '投稿に失敗しました...';
+        showToast(message);
         console.error(error);
-        return;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '満腹になった！を投稿する 😋';
       }
-
-      fullSelectedFile = null;
-      closeModal();
-      await loadPosts();
-      showToast('😋 ループ完成！満腹になったね！');
     });
 
     // ===== 投稿削除 =====
@@ -1734,7 +1858,17 @@
 
     // ===== ログアウト =====
     document.getElementById('btn-logout')?.addEventListener('click', async () => {
-      if (!confirm('ログアウトすると匿名アカウントのデータは削除されます。よろしいですか？')) return;
+      if (!confirm('ログアウトするとアプリ内データは削除されます。よろしいですか？')) return;
+
+      const { error } = await db.from('profiles')
+        .delete()
+        .eq('id', currentUser.id);
+
+      if (error) {
+        showToast('データ削除に失敗しました...');
+        console.error(error);
+        return;
+      }
 
       await db.auth.signOut();
       currentUser = null;

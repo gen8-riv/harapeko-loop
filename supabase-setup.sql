@@ -49,11 +49,13 @@ alter table reactions enable row level security;
 create policy "profiles_select" on profiles for select using (true);
 create policy "profiles_insert" on profiles for insert with check (auth.uid() = id);
 create policy "profiles_update" on profiles for update using (auth.uid() = id);
+create policy "profiles_delete" on profiles for delete using (auth.uid() = id);
 
 -- posts: 誰でも読める、自分だけ投稿・更新できる
 create policy "posts_select" on posts for select using (true);
 create policy "posts_insert" on posts for insert with check (auth.uid() = user_id);
 create policy "posts_update" on posts for update using (auth.uid() = user_id);
+create policy "posts_delete" on posts for delete using (auth.uid() = user_id);
 
 -- reactions: 誰でも読める、自分だけ追加・削除できる
 create policy "reactions_select" on reactions for select using (true);

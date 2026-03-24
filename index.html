@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>はらぺこループ</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#E8623E">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     /* ===== リセット & ベース ===== */
@@ -897,6 +902,99 @@
       outline: none;
       border-color: #E8623E;
     }
+
+    /* ===== インストールバナー ===== */
+    .install-banner {
+      position: fixed;
+      bottom: 80px;
+      left: 12px;
+      right: 12px;
+      max-width: 456px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #E8623E 0%, #F4A261 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 18px 20px;
+      z-index: 99;
+      box-shadow: 0 8px 24px rgba(232, 98, 62, 0.3);
+      display: none;
+      animation: installBannerIn 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    @keyframes installBannerIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .install-banner.hiding {
+      animation: installBannerOut 0.3s ease-in forwards;
+    }
+    @keyframes installBannerOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(20px); }
+    }
+    .install-banner-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .install-banner-icon {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .install-banner-text {
+      flex: 1;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .install-banner-text strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+    .install-banner-steps {
+      font-size: 12px;
+      opacity: 0.92;
+      margin-top: 4px;
+    }
+    .install-banner-steps .share-icon {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      vertical-align: middle;
+      margin: 0 2px;
+    }
+    .install-banner-btn {
+      background: #fff;
+      color: #E8623E;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .install-banner-btn:active {
+      opacity: 0.8;
+    }
+    .install-banner-close {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .install-banner-close:hover {
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -1033,6 +1131,13 @@
         <button class="submit-btn submit-btn-full" id="btn-post-full">満腹になった！を投稿する 😋</button>
         <button class="cancel-btn" id="btn-cancel-full">まだ空腹中...</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== インストールバナー ===== -->
+  <div class="install-banner" id="installBanner">
+    <button class="install-banner-close" id="installBannerClose">&times;</button>
+    <div class="install-banner-content" id="installBannerContent">
     </div>
   </div>
 
@@ -1880,6 +1985,78 @@
 
     // ===== アプリ起動 =====
     initAuth();
+
+    // ===== インストールバナー =====
+    (function() {
+      var banner = document.getElementById("installBanner");
+      var content = document.getElementById("installBannerContent");
+      var closeBtn = document.getElementById("installBannerClose");
+      if (!banner || !content) return;
+
+      var isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+      var dismissed = localStorage.getItem("installBannerDismissed");
+      if (isStandalone || dismissed) return;
+
+      var deferredPrompt = null;
+      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+      window.addEventListener("beforeinstallprompt", function(e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        showBanner("chrome");
+      });
+
+      if (isIOS) {
+        setTimeout(function() { showBanner("ios"); }, 1000);
+      }
+
+      function showBanner(type) {
+        if (type === "chrome") {
+          content.innerHTML =
+            '<img class="install-banner-icon" src="icons/icon-192.png" alt="はらぺこループ">' +
+            '<div class="install-banner-text">' +
+              '<strong>ホーム画面に追加しませんか？</strong>' +
+              'アプリとして使えて、もっと手軽に投稿できます' +
+            '</div>' +
+            '<button class="install-banner-btn" id="installBtn">追加する</button>';
+          banner.style.display = "block";
+          document.getElementById("installBtn").addEventListener("click", function() {
+            if (deferredPrompt) {
+              deferredPrompt.prompt();
+              deferredPrompt.userChoice.then(function() { hideBanner(); });
+            }
+          });
+        } else if (type === "ios") {
+          content.innerHTML =
+            '<img class="install-banner-icon" src="icons/icon-192.png" alt="はらぺこループ">' +
+            '<div class="install-banner-text">' +
+              '<strong>ホーム画面に追加しませんか？</strong>' +
+              'アプリとして使えて、もっと手軽に投稿できます' +
+              '<div class="install-banner-steps">' +
+                '下の ' +
+                '<svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>' +
+                ' → 「ホーム画面に追加」' +
+              '</div>' +
+            '</div>';
+          banner.style.display = "block";
+        }
+      }
+
+      function hideBanner() {
+        banner.classList.add("hiding");
+        setTimeout(function() { banner.style.display = "none"; }, 300);
+        localStorage.setItem("installBannerDismissed", "1");
+      }
+
+      closeBtn.addEventListener("click", hideBanner);
+    })();
+
+    // ===== Service Worker 登録 =====
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
   </script>
 </body>
 </html>
